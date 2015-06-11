@@ -28,9 +28,8 @@ var sameSchemeRegEx = new RegExp('^(\/\/|' + location.protocol + ')', 'i');
 
 // ajaxTransport exists in jQuery 1.5+
 $.ajaxTransport('* text html xml json', function(options, userOptions, jqXHR) {
-
   // Only continue if the request is: asynchronous, uses GET or POST method, has HTTP or HTTPS protocol, and has the same scheme as the calling page
-  if (!options.crossDomain || !options.async || !getOrPostRegEx.test(options.type) || !httpRegEx.test(options.url) || !sameSchemeRegEx.test(options.url)) {
+  if (!options.crossDomain || !options.async || !httpRegEx.test(options.url) || !sameSchemeRegEx.test(options.url)) {
     return;
   }
 
@@ -100,10 +99,33 @@ $.ajaxTransport('* text html xml json', function(options, userOptions, jqXHR) {
         });
       };
 
-      if (userOptions.data) {
-        postData = ($.type(userOptions.data) === 'string') ? userOptions.data : $.param(userOptions.data);
+      var url = options.url;
+      var method = options.type;
+      var data = userOptions.data || {};
+      if ($.type(userOptions.data) === 'string') {
+        postData = userOptions.data;
+      } else {
+        if (!getOrPostRegEx.test(method)) {
+          // rails-style http method override
+          userOptions['_method'] = method;
+          method = 'post';
+        }
+
+        // copy custom headers into the post data
+        for (var key in headers) {
+          if (/^X-/i.test(key)) {
+            data[key] = headers[key];
+          }
+        }
+
+        postData = $.param(data);
       }
-      xdr.open(options.type, options.url);
+
+      if (/get/i.test(method)) {
+        url += (url.indexOf('?') >= 0 ? '&' :'?') + postData;
+      }
+
+      xdr.open(method, url);
       xdr.send(postData);
     },
     abort: function() {
