@@ -1,3 +1,6 @@
+/***************************************************************************
+  Get it at https://github.com/MrLeebo/jQuery-ajaxTransport-XDomainRequest
+****************************************************************************/
 /*!
  * jQuery-ajaxTransport-XDomainRequest - v1.0.4 - 2015-03-05
  * https://github.com/MoonScript/jQuery-ajaxTransport-XDomainRequest
@@ -102,8 +105,14 @@ $.ajaxTransport('* text html xml json', function(options, userOptions, jqXHR) {
       var url = options.url;
       var method = options.type;
       var data = userOptions.data || {};
-      if ($.type(userOptions.data) === 'string') {
-        postData = userOptions.data;
+      try {
+        data = JSON.parse(data);
+      }
+      catch(err) {
+      }
+
+      if ($.type(data) === 'string') {
+        postData = data;
       } else {
         if (!getOrPostRegEx.test(method)) {
           // rails-style http method override
